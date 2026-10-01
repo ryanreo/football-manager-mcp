@@ -19,7 +19,7 @@ internal sealed class ScreenReader
         switch (command.GetString())
         {
             case "status":
-                return Replies.Ok(new { version = "0.1.2", session, processId = Process.GetCurrentProcess().Id,
+                return Replies.Ok(new { version = "0.1.3", session, processId = Process.GetCurrentProcess().Id,
                     unityVersion = Application.unityVersion, scene = SceneManager.GetActiveScene().name,
                     game = "Football Manager 26", capabilities = new[] { "screen", "click", "set_text", "scroll", "diagnostics" } });
             case "screen":
@@ -55,6 +55,23 @@ internal sealed class ScreenReader
         last = null;
         if (command == "click")
         {
+            // FM's dropdowns are not Unity Buttons, and some SIButtons accept
+            // submit events only. Use their own input entry points once; never
+            // combine them with another event or retry after dispatch.
+            var fmButton = target.TryCast<SI.Bindable.SIButton>();
+            var dropdown = target.TryCast<SI.Bindable.SIDropdown>();
+            if (fmButton != null)
+            {
+                if (!fmButton.IsInteractable()) return Replies.Error("element_unavailable", "FM reports that this button is not interactable.");
+                fmButton.SimulateButtonClick();
+            }
+            else if (dropdown != null)
+            {
+                if (!dropdown.IsBound) return Replies.Error("element_unavailable", "Dropdown data has not loaded.");
+                dropdown.OpenDropdownFromInputAction();
+            }
+            else
+            {
             var evt = ClickEvent.GetPooled();
             try
             {
@@ -69,6 +86,7 @@ internal sealed class ScreenReader
             else target.SendEvent(evt);
             }
             finally { evt.Dispose(); }
+            }
             return Replies.Ok(new { dispatched = true, verified = false, action = command, element_id = id,
                 next = "Read the screen to verify the result. Some custom FM controls may require native pointer input." });
         }

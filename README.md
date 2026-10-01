@@ -13,7 +13,7 @@ An experimental local bridge that exposes FM26's Unity interface to an AI throug
 | `fm_scroll` | Scroll a Unity ScrollView to reveal more rows |
 | `fm_diagnostics` | Inspect active UI documents and loaded assembly names |
 
-These are interface tools, not a complete squad/transfer/tactics API. Live testing on FM26 26.3.0 has verified connection, Preferences navigation, and opening Squad, First Team and Tactics in a loaded save with bridge 0.1.2. Coverage of player dropdowns and other custom controls is still incomplete. Off-screen and virtualised player rows require navigation/scrolling. No autonomous season management has been validated.
+These are interface tools, not a complete squad/transfer/tactics API. Live testing on FM26 26.3.0 has verified connection, Preferences navigation, and opening Squad, First Team and Tactics in a loaded save with bridge 0.1.2. Bridge 0.1.3 adds FM's own button-submit and dropdown input handlers; those additions have compiled against the installed game libraries but await live validation. Off-screen and virtualised player rows require navigation/scrolling. No autonomous season management has been validated.
 
 ## Quick start
 
@@ -93,7 +93,7 @@ npm.cmd test
 
 Tests exercise Windows pipe transport, fragmented Unicode responses, bridge error propagation, offline detection, timeouts without retries, screen filtering, and a real MCP stdio handshake/tool calls against a simulated game bridge. They do not certify interaction with the actual game.
 
-Look for `Loading [FM26 MCP Bridge 0.1.2]` and `User-SID restricted named pipe: fm26-mcp` in the game's `BepInEx/LogOutput.log`. No new bridge log means the game has not loaded this plugin. A connection with zero UI nodes may mean a loading screen or an unsupported UI; check `fm_diagnostics`. Screen traversal checks both active UIDocuments and registered runtime panels and caps its output at 5,000 controls.
+Look for `Loading [FM26 MCP Bridge 0.1.3]` and `User-SID restricted named pipe: fm26-mcp` in the game's `BepInEx/LogOutput.log`. No new bridge log means the game has not loaded this plugin. A connection with zero UI nodes may mean a loading screen or an unsupported UI; check `fm_diagnostics`. Screen traversal checks both active UIDocuments and registered runtime panels and caps its output at 5,000 controls.
 
 ### Animated Portal rejects clicks
 
@@ -121,7 +121,7 @@ node .\scripts\test-pipe-factory.mjs
 
 That check validates the pipe implementation without loading Unity. The corrected plugin has also passed live connection and reversible menu-navigation checks. Squad reading, tactics, text entry, and scrolling remain to be tested in a loaded save.
 
-Synthetic clicks have opened the squad and tactics screens in a loaded save. Some player dropdowns and custom controls do not respond to this event path and need further support.
+Version 0.1.3 dispatches SIButtons through `SimulateButtonClick` and bound SIDropdowns through `OpenDropdownFromInputAction`. These are the game's input entry points, so buttons that accept submit events and dropdowns with SIClickable handlers can receive the intended input. Other Unity controls retain the existing event path. Each request dispatches one path only and still requires a fresh read to verify the result. These new FM-specific paths await live validation; rich-text links and dragging are not supported by these additions.
 
 ## Remove
 

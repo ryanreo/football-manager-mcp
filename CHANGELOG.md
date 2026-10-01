@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Dispatch FM SIButtons through their own simulated-input handler and bound SIDropdowns through their keyboard-input entry point.
+- Use one dispatch path per request and preserve snapshot validation and mandatory result inspection.
+- Align the MCP server and package versions with the plugin version.
+- Build against the installed FM26 libraries with zero warnings or errors. Plugin loading is verified; live player-control validation is pending.
+
 ## 0.1.2
 
 - Validate the selected control and its context instead of fingerprinting the full screen. Portal carousel animation no longer rejects otherwise unchanged navigation controls.

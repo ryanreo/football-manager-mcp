@@ -8,6 +8,8 @@
     <EnableDefaultItems>true</EnableDefaultItems>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SI.Bindable"><HintPath>$(GamePath)/BepInEx/interop/SI.Bindable.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SI.UI"><HintPath>$(GamePath)/BepInEx/interop/SI.UI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BepInEx.Core"><HintPath>$(GamePath)/BepInEx/core/BepInEx.Core.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BepInEx.Unity.IL2CPP"><HintPath>$(GamePath)/BepInEx/core/BepInEx.Unity.IL2CPP.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Il2CppInterop.Runtime"><HintPath>$(GamePath)/BepInEx/core/Il2CppInterop.Runtime.dll</HintPath><Private>false</Private></Reference>
