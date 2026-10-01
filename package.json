@@ -1,10 +1,12 @@
 {
   "name": "fm26-mcp",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "description": "Local MCP bridge to the Football Manager 26 Unity interface",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server/index.mjs",
     "test": "node --test tests/*.test.mjs",

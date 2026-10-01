@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -21,7 +19,7 @@ internal sealed class ScreenReader
         switch (command.GetString())
         {
             case "status":
-                return Replies.Ok(new { version = "0.1.1", session, processId = Process.GetCurrentProcess().Id,
+                return Replies.Ok(new { version = "0.1.2", session, processId = Process.GetCurrentProcess().Id,
                     unityVersion = Application.unityVersion, scene = SceneManager.GetActiveScene().name,
                     game = "Football Manager 26", capabilities = new[] { "screen", "click", "set_text", "scroll", "diagnostics" } });
             case "screen":
@@ -44,9 +42,11 @@ internal sealed class ScreenReader
         if (DateTime.UtcNow - last.Created > TimeSpan.FromMinutes(2))
             return Replies.Error("stale_snapshot", "Snapshot expired. Read the screen again.");
         var current = Capture();
-        if (current.Fingerprint != last.Fingerprint)
-            return Replies.Error("screen_changed", "The interface changed. Read a new screen before acting.");
         var id = args.GetProperty("element_id").GetString() ?? "";
+        if (last.Truncated || current.Truncated)
+            return Replies.Error("incomplete_screen", "The interface exceeded the inspection limit; cannot validate the action.");
+        var mismatch = SnapshotGuard.Validate(last.Scene, last.Nodes, current.Scene, current.Nodes, id);
+        if (mismatch != null) return Replies.Error("screen_changed", mismatch + " Read a new screen before acting.");
         if (!current.Elements.TryGetValue(id, out var target) || target.panel == null || !target.enabledInHierarchy)
             return Replies.Error("element_unavailable", "Element is missing or disabled.");
         var info = current.Nodes.FirstOrDefault(x => x.id == id);
@@ -114,8 +114,6 @@ internal sealed class ScreenReader
             Walk(root, null, true, result, 0);
         }
         if (result.Documents.Count == 0) result.Warnings.Add("No active UI panels. Wait for the menu to load; run diagnostics if this persists.");
-        var fingerprintInput = result.Scene + JsonSerializer.Serialize(result.Nodes);
-        result.Fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintInput)));
         result.Id = session + ":" + Guid.NewGuid().ToString("N");
         return result;
     }
@@ -155,7 +153,6 @@ internal sealed class Snapshot
 {
     public string Id = "";
     public string Scene = "";
-    public string Fingerprint = "";
     public readonly DateTime Created = DateTime.UtcNow;
     public int Visited;
     public bool Truncated;
@@ -166,5 +163,3 @@ internal sealed class Snapshot
     public object Public() => new { snapshot_id = Id, scene = Scene, captured_at = Created.ToString("O"),
         documents = Documents, nodes = Nodes, visited = Visited, truncated = Truncated, warnings = Warnings };
 }
-internal sealed record Node(string id, string? parent_id, string type, string name, string text, string tooltip,
-    string[] classes, bool visible, bool enabled, float x, float y, float width, float height);

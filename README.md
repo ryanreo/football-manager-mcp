@@ -13,7 +13,7 @@ An experimental local bridge that exposes FM26's Unity interface to an AI throug
 | `fm_scroll` | Scroll a Unity ScrollView to reveal more rows |
 | `fm_diagnostics` | Inspect active UI documents and loaded assembly names |
 
-These are interface tools, not a complete squad/transfer/tactics API. Live testing on FM26 26.3.0 has verified connection, main-menu text reading, opening Preferences through an SIButton, reading its controls, and closing it back to the main menu. Coverage of other FM controls still needs testing. Off-screen and virtualised player rows require navigation/scrolling. No autonomous season management has been validated.
+These are interface tools, not a complete squad/transfer/tactics API. Live testing on FM26 26.3.0 has verified connection, Preferences navigation, and opening Squad, First Team and Tactics in a loaded save with bridge 0.1.2. Coverage of player dropdowns and other custom controls is still incomplete. Off-screen and virtualised player rows require navigation/scrolling. No autonomous season management has been validated.
 
 ## Quick start
 
@@ -57,7 +57,7 @@ The smoke check uses an actual MCP client and only reads the game. `doctor` repo
 3. Use that response's `snapshot_id` and the control's `element_id` for one action.
 4. Read the screen again and verify the result before continuing.
 
-Each snapshot allows one action and expires after two minutes. The plugin rechecks the screen fingerprint, visibility and enabled state before dispatch. It rejects stale IDs and queued requests that expire before execution. These checks cannot prove that a UI click is harmless or that a custom FM callback accepted it.
+Each snapshot allows one action and expires after two minutes. The plugin rechecks the selected control's identity, content, bounds, ancestors, open panels, visibility and enabled state before dispatch. It rejects stale IDs and queued requests that expire before execution. Unrelated carousel animation does not invalidate an otherwise unchanged control. These checks cannot prove that a UI click is harmless or that a custom FM callback accepted it.
 
 `fm_click` reports `dispatched: true, verified: false`: verify a resulting screen change yourself. Text-entry verification means the field value changed, not that a contract/search/save was submitted. Scroll verification likewise requires a fresh screen read. Transport timeouts never trigger automatic action retries.
 
@@ -93,7 +93,16 @@ npm.cmd test
 
 Tests exercise Windows pipe transport, fragmented Unicode responses, bridge error propagation, offline detection, timeouts without retries, screen filtering, and a real MCP stdio handshake/tool calls against a simulated game bridge. They do not certify interaction with the actual game.
 
-Look for `Loading [FM26 MCP Bridge 0.1.1]` and `User-SID restricted named pipe: fm26-mcp` in the game's `BepInEx/LogOutput.log`. No new bridge log means the game has not loaded this plugin. A connection with zero UI nodes may mean a loading screen or an unsupported UI; check `fm_diagnostics`. Screen traversal checks both active UIDocuments and registered runtime panels and caps its output at 5,000 controls.
+Look for `Loading [FM26 MCP Bridge 0.1.2]` and `User-SID restricted named pipe: fm26-mcp` in the game's `BepInEx/LogOutput.log`. No new bridge log means the game has not loaded this plugin. A connection with zero UI nodes may mean a loading screen or an unsupported UI; check `fm_diagnostics`. Screen traversal checks both active UIDocuments and registered runtime panels and caps its output at 5,000 controls.
+
+### Animated Portal rejects clicks
+
+Version 0.1.1 fingerprinted the entire rendered screen. The Portal's news-carousel progress bar changes every frame, so that version could read the Portal but rejected its navigation clicks. Version 0.1.2 compares the selected control and its context instead. Changes to its label, position, enabled state, ancestors, scene or open panels still invalidate the action. Seven standalone tests cover animation tolerance and stale-control rejection:
+
+```powershell
+& .\.tools\dotnet\dotnet.exe build .\tests\SnapshotGuard\SnapshotGuard.csproj -c Release --nologo
+& .\.tools\dotnet\dotnet.exe .\tests\SnapshotGuard\bin\Release\net6.0\SnapshotGuard.dll
+```
 
 ### Elevated game: access denied
 
@@ -112,7 +121,7 @@ node .\scripts\test-pipe-factory.mjs
 
 That check validates the pipe implementation without loading Unity. The corrected plugin has also passed live connection and reversible menu-navigation checks. Squad reading, tactics, text entry, and scrolling remain to be tested in a loaded save.
 
-Synthetic click events have been verified on the main-menu Preferences button and the Preferences close button. Other custom FM controls may need pointer-down/up or native input. The next development step is squad-table extraction and tested navigation helpers in a loaded save.
+Synthetic clicks have opened the squad and tactics screens in a loaded save. Some player dropdowns and custom controls do not respond to this event path and need further support.
 
 ## Remove
 

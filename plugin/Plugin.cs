@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace FM26McpBridge;
 
-[BepInPlugin("local.fm26.mcp.bridge", "FM26 MCP Bridge", "0.1.1")]
+[BepInPlugin("local.fm26.mcp.bridge", "FM26 MCP Bridge", "0.1.2")]
 [BepInProcess("fm.exe")]
 public sealed class Plugin : BasePlugin
 {
@@ -18,7 +18,7 @@ public sealed class Plugin : BasePlugin
         stop = new CancellationTokenSource();
         AddComponent<BridgePump>();
         _ = Task.Run(() => PipeLoop(stop.Token));
-        Log.LogInfo("FM26 MCP Bridge 0.1.1 loaded. User-SID restricted named pipe: fm26-mcp");
+        Log.LogInfo("FM26 MCP Bridge 0.1.2 loaded. User-SID restricted named pipe: fm26-mcp");
     }
     public override bool Unload()
     {
